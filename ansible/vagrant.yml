@@ -17,7 +17,7 @@
     - role: uwsgi-python-app
       app_name: influxer
       python_packages:
-        - "git+https://github.com/theonion/influxer2#egg=influxer2"
+        - "git+https://github.com/theonion/influxer2/influxer2#egg=influxer2"
       uwsgi:
         - module: "influxer2.wsgi:application"
           http: "{{ ansible_eth0.ipv4.address }}:80"
