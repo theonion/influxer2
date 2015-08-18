@@ -88,20 +88,25 @@ gevent.spawn(count_events)
 def write_page_views(page_views):
     payloads = {}
     for (site, content_id, event, path), count in page_views.items():
-        if not len(site) or len(content_id):
-            continue
-
         payloads.setdefault(site, [])
         payloads[site].append([content_id, event, path, count])
 
     for site, points in payloads.items():
+        body = []
+        for (content_id, event, path, count) in points:
+            body.append({
+                "measurement": site,
+                "tags": {
+                    "content_id": content_id,
+                    "event": event,
+                    "path": path
+                },
+                "fields": {
+                    "value": count,
+                }
+            })
         try:
-            body = [{
-                "name": site,
-                "columns": ["content_id", "event", "path", "value"],
-                "points": points,
-            }]
-            sys.stderr.write("writing {} points to series {}\n".format(len(points), site))
+            sys.stderr.write("writing {} points to measurement {}\n".format(len(body), site))
             sys.stderr.write("{}\n".format(str(body)))
             influx_client.write_points(body)
         except Exception as e:
@@ -121,21 +126,25 @@ def write_content_views(content_views):
             int(content_id)
         except ValueError:
             continue
-        if not len(site):
-            continue
 
         payloads.setdefault(site, [])
         payloads[site].append((content_id, count))
 
     for site, points in payloads.items():
         name = "{}_trending".format(site)
+        body = []
+        for (content_id, count) in points:
+            body.append({
+                "measurement": name,
+                "tags": {
+                    "content_id": content_id,
+                },
+                "fields": {
+                    "value": count,
+                }
+            })
         try:
-            body = [{
-                "name": name,
-                "columns": ["content_id", "value"],
-                "points": points,
-            }]
-            sys.stderr.write("writing {} points to series {}\n".format(len(points), name))
+            sys.stderr.write("writing {} points to measurement {}\n".format(len(body), name))
             sys.stderr.write("{}\n".format(str(body)))
             influx_client.write_points(body)
         except Exception as e:
