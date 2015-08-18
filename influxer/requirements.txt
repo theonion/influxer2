@@ -1,0 +1,2 @@
+gevent==1.0.2
+influxdb==2.8.0
