@@ -102,6 +102,7 @@ def write_page_views(page_views):
                 "points": points,
             }]
             sys.stderr.write("writing {} points to series {}\n".format(len(points), site))
+            sys.stderr.write("{}\n".format(str(body)))
             influx_client.write_points(body)
         except Exception as e:
             sys.stderr.write("{}\n".format(str(e)))
@@ -135,6 +136,7 @@ def write_content_views(content_views):
                 "points": points,
             }]
             sys.stderr.write("writing {} points to series {}\n".format(len(points), name))
+            sys.stderr.write("{}\n".format(str(body)))
             influx_client.write_points(body)
         except Exception as e:
             sys.stderr.write("{}\n".format(str(e)))
