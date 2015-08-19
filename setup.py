@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="influxer2",
-    version="0.0.1",
+    version="0.0.2",
 
     packages=["influxer2", ],
     install_requires=["gevent==1.0.2", "influxdb==2.8.0", ],

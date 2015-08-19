@@ -3,8 +3,8 @@
 
 import base64
 from collections import Counter
+import logging
 import os
-import sys
 
 import gevent
 from gevent import queue
@@ -19,7 +19,6 @@ except ImportError:
 # build the response gif
 gif = base64.b64decode("R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
-
 # init influxdb client
 host = os.environ.get("INFLUXER_INFLUXDB_HOST_IP", "localhost")
 port = os.environ.get("INFLUXER_INFLUXDB_PORT", 8086)
@@ -28,13 +27,16 @@ pwd = os.environ.get("INFLUXER_INFLUXDB_PASSWORD", "root")
 db = os.environ.get("INFLUXER_INFLUXDB_DB", "influxdb")
 influx_client = InfluxDBClient(host, port, user, pwd, db)
 
-
 # init the gevent queue
 events_queue = queue.Queue()
 flush_interval = os.environ.get("INFLUXER_FLUSH_INTERVAL", 60)  # seconds
 
 # acceptable site names
 site_names = ("onion", "avclub", "clickhole", "onionstudios", "onionads", )
+
+# init the logger
+logger = logging.getLogger('influxer')
+logger.setLevel(logging.INFO)
 
 
 # main wait loop
@@ -63,21 +65,15 @@ def count_events():
             except queue.Empty:
                 break
             except Exception as e:
-                sys.stderr.write("{}\n".format(str(e)))
+                logger.exception(e)
                 break
 
         # after tabulating, spawn a new thread to send the data to influxdb
         if len(page_views):
-            sys.stderr.write("spawning write_page_views with {} events\n".format(len(page_views)))
             gevent.spawn(write_page_views, page_views)
-        else:
-            sys.stderr.write("there are no page view events\n")
 
         if len(content_views):
-            sys.stderr.write("spawning write_content_views with {} events\n".format(len(content_views)))
             gevent.spawn(write_content_views, content_views)
-        else:
-            sys.stderr.write("there are no content view events\n")
 
 
 # create the wait loop
@@ -106,11 +102,9 @@ def write_page_views(page_views):
                 }
             })
         try:
-            sys.stderr.write("writing {} points to measurement {}\n".format(len(body), site))
-            sys.stderr.write("{}\n".format(str(body)))
             influx_client.write_points(body)
         except Exception as e:
-            sys.stderr.write("{}\n".format(str(e)))
+            logger.exception(e)
 
 
 def write_content_views(content_views):
@@ -144,11 +138,9 @@ def write_content_views(content_views):
                 }
             })
         try:
-            sys.stderr.write("writing {} points to measurement {}\n".format(len(body), name))
-            sys.stderr.write("{}\n".format(str(body)))
             influx_client.write_points(body)
         except Exception as e:
-            sys.stderr.write("{}\n".format(str(e)))
+            logger.exception(e)
 
 
 # main applications
@@ -170,7 +162,7 @@ def application(env, start_response):
             path = params.get("path", [""])[0]
             events_queue.put((site, content_id, event, path))
         except Exception as e:
-            sys.stderr.write("{}\n".format(str(e)))
+            logger.exception(e)
 
     else:
         start_response("404 Not Found", [("Content-Type", "text/plain")])
