@@ -1,2 +1,2 @@
-gevent==1.0.2
+gevent==23.9.1
 influxdb==2.8.0

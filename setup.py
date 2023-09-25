@@ -5,7 +5,7 @@ setup(
     version="0.0.2",
 
     packages=["influxer2", ],
-    install_requires=["gevent==1.0.2", "influxdb==2.8.0", ],
+    install_requires=["gevent==23.9.1", "influxdb==2.8.0", ],
 
     author="Vince Forgione",
     author_email="vforgione@theonion.com",
